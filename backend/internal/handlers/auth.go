@@ -13,7 +13,11 @@ type AuthHandler struct {
 }
 
 func ShowRegister(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./register.html")
+	http.ServeFile(w, r, "../register.html")
+}
+
+func ShowLogin(w http.ResponseWriter, r *http.Request){
+	http.ServeFile(w, r, "../login.html")
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
@@ -55,4 +59,36 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 
 
 	fmt.Println(hashedPassword)
+}
+
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	if password == "" || email == "" {
+		http.Error(w, "please fill in all entries", http.StatusBadRequest)
+		return
+	}
+
+	schema := `SELECT username, id, password_hash FROM users WHERE email = ?`
+
+	row := h.DB.QueryRow(schema, email)
+
+	var dbemail, dbPassword string
+
+	var user_id int
+
+	row.Scan(&dbemail, &user_id, &dbPassword)
+
+	err := bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password))
+
+	if err != nil {
+		http.Error(w, "Invalid email or password", http.StatusBadRequest)
+		return
+	}
+
+	fmt.Fprintf(w, "Welcome back %v", dbemail)
+	fmt.Println(dbemail, email, user_id, dbPassword)
+	// if 
 }
