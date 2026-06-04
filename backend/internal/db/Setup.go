@@ -2,22 +2,16 @@ package db
 
 import (
 	"database/sql"
+	_"embed"
 	"fmt"
 )
 
-func Setup (database *sql.DB) {
+var schema string
 
-	schema := `
-	CREATE TABLE IF NOT EXISTS users(
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		username TEXT NOT NULL UNIQUE,
-		password_hash TEXT NOT NULL,
-		email TEXT NOT NULL UNIQUE,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-		`
+func Setup (database *sql.DB) {
 	_, err := database.Exec(schema)
 	if err != nil {
 		fmt.Printf("failed to create table users %v", err)
-	}	
+		return
+		}	
 }
