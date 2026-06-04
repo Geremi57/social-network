@@ -35,6 +35,8 @@ func main(){
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.ShowRegister)
+	mux.HandleFunc("/log", handlers.ShowLogin)
+	mux.HandleFunc("/login", authHandler.Login)
 	mux.HandleFunc("/register", authHandler.Register)
 
 	fmt.Println("Server is running on port 8080")
