@@ -1,12 +1,22 @@
 package auth
 
-import "net/http"
+import (
+	"net/http"
+	"golang.org/x/crypto/bcrypt"
+	"database/sql"
+	"fmt"
+)
+
+type AuthHandler struct {
+	DB       *sql.DB
+	// Renderer *handlers.Handler
+}
 
 func ShowRegister(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./register.html")
 }
 
-func Register(w http.ResponseWriter, r *http.Request){
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
 	username := r.FormValue("username")
 
 	email := r.FormValue("email")
@@ -25,5 +35,24 @@ func Register(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	
+	schema := `INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)`
+
+	passByte := []byte(password)
+
+	fmt.Println(passByte)
+	hashedPassword, erro := bcrypt.GenerateFromPassword(passByte, bcrypt.DefaultCost)
+
+	if erro != nil {
+		http.Error(w, "failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
+		_,err := h.DB.Exec(schema, username, string(hashedPassword), email)
+		if err != nil {
+			http.Error(w, "user with these credentials already exists", http.StatusInternalServerError)
+			return
+		}
+
+
+	fmt.Println(hashedPassword)
 }
