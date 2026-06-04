@@ -1,11 +1,16 @@
 package main
 
 import (
-	"social-network/auth"
+	"social-network/internal/auth"
+	"social-network/internal/data"
 	"net/http"
+	"database/sql"
 	"log"
 	"fmt"
+	_"github.com/mattn/go-sqlite3"
 )
+
+var database *sql.DB
 
 
 func main(){
@@ -13,15 +18,24 @@ func main(){
 
 	// }
 
-	database, err := sql.Open("sqlite3", "./data/forum.db")
+	var err error
+
+	database, err = sql.Open("sqlite3", "forum.db")
 	if err != nil {
-		fmt.Errorf("failed to open db %v", err)
+		log.Fatalf("failed to open db %v", err)
 	}
 
 	defer database.Close()
+
+	db.Setup(database)
+
+	authHandler := &auth.AuthHandler{
+		DB: database,
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", auth.ShowRegister)
-	mux.HandleFunc("/register", auth.Register)
+	mux.HandleFunc("/register", authHandler.Register)
 
 	fmt.Println("Server is running on port 8080")
 
