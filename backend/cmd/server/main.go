@@ -1,46 +1,51 @@
 package main
 
 import (
-	"social-network/backend/internal/handlers"
-	"social-network/backend/internal/db"
-	"net/http"
-	"database/sql"
-	"log"
+	// "database/sql"
 	"fmt"
-	_"github.com/mattn/go-sqlite3"
+	"log"
+	"net/http"
+
+	// "social-network/backend/internal/db"
+	"social-network/backend/internal/db"
+	"social-network/backend/internal/handlers"
+	"social-network/backend/internal/middlewares"
+
+	_ "github.com/mattn/go-sqlite3"
+	
 )
 
-var database *sql.DB
+// var database *sql.DB
 
-
-func main(){
+func main() {
 	// func (w http.ResponseWriter, r *http.Request) {
 
 	// }
 
 	var err error
 
-	database, err = sql.Open("sqlite3", "forum.db")
+	// database, err = sql.Open("sqlite3", "social-network.db")
 	if err != nil {
 		log.Fatalf("failed to open db %v", err)
 	}
 
-	defer database.Close()
+	// defer database.Close()
 
-	db.Setup(database)
+	db.Setup()
+	db.RunMigrations()
 
-	authHandler := &handlers.AuthHandler{
-		DB: database,
-	}
+	// authHandler := &handlers.AuthHandler{
+	// 	DB: database,
+	// }
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handlers.ShowRegister)
 	mux.HandleFunc("/log", handlers.ShowLogin)
-	mux.HandleFunc("/login", authHandler.Login)
-	mux.HandleFunc("/register", authHandler.Register)
+	mux.HandleFunc("/login", handlers.Login)
+	mux.HandleFunc("/register", handlers.Register)
 
 	fmt.Println("Server is running on port 8080")
 
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", middlewares.EnableCORS(mux)))
 	// auth.Register
 }
