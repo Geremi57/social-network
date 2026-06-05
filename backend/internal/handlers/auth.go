@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"golang.org/x/crypto/bcrypt"
 	"database/sql"
-	"fmt"
 	"social-network/backend/internal/db"
 	"encoding/json"
 )
@@ -28,7 +27,7 @@ func ShowLogin(w http.ResponseWriter, r *http.Request){
 	http.ServeFile(w, r, "../login.html")
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request){
+func Register(w http.ResponseWriter, r *http.Request){
 	// username := r.FormValue("username")
 
 	// email := r.FormValue("email")
@@ -66,7 +65,7 @@ hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCos
 
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"error": "email or username already registered"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "email or username already exists"})
 		return
 	}
 
@@ -79,34 +78,3 @@ hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCos
 	// fmt.Println(hashedPassword)
 }
 
-
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request){
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-
-	if password == "" || email == "" {
-		http.Error(w, "please fill in all entries", http.StatusBadRequest)
-		return
-	}
-
-	schema := `SELECT username, id, password_hash FROM users WHERE email = ?`
-
-	row := h.DB.QueryRow(schema, email)
-
-	var dbemail, dbPassword string
-
-	var user_id int
-
-	row.Scan(&dbemail, &user_id, &dbPassword)
-
-	err := bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password))
-
-	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusBadRequest)
-		return
-	}
-
-	fmt.Fprintf(w, "Welcome back %v", dbemail)
-	fmt.Println(dbemail, email, user_id, dbPassword)
-	// if 
-}
