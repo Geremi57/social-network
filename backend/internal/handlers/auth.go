@@ -19,7 +19,8 @@ type AuthHandler struct {
 }
 
 type RegisterRequest struct {
-	Name     string `json:"name"`
+	FirstName     string `json:"firstName"`
+	LastName string `json:"lastName"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -63,13 +64,13 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.DB.Exec(
-		"INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-		req.Name, req.Email, string(hash),
+		"INSERT INTO users (firstname, lastname, email, password_hash) VALUES (?, ?, ?, ?)",
+		req.FirstName, req.LastName, req.Email, string(hash),
 	)
 	
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"error": "email or username already exists"})
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -80,7 +81,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	var username string
 
 	err = db.DB.QueryRow(
-		"SELECT id, username FROM users WHERE email = ?",
+		"SELECT id, firstname FROM users WHERE email = ?",
 		req.Email).Scan(&id, &username)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
