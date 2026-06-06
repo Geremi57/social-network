@@ -45,7 +45,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	var userID int
 	var username, email string
 	err = db.DB.QueryRow(`
-        SELECT u.id, u.username, u.email 
+        SELECT u.id, u.firstname, u.email 
         FROM users u 
         JOIN sessions s ON s.user_id = u.id 
         WHERE s.id = ? AND s.expires_at > CURRENT_TIMESTAMP
@@ -59,7 +59,7 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"id":       userID,
-		"username": username,
+		"firstname": username,
 		"email":    email,
 	})
 }
