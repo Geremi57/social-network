@@ -12,7 +12,6 @@ import (
 	"social-network/backend/internal/middlewares"
 
 	_ "github.com/mattn/go-sqlite3"
-	
 )
 
 // var database *sql.DB
@@ -42,7 +41,9 @@ func main() {
 	mux.HandleFunc("/", handlers.ShowRegister)
 	mux.HandleFunc("/log", handlers.ShowLogin)
 	mux.HandleFunc("/login", handlers.Login)
+	mux.HandleFunc("/logout", handlers.Logout)
 	mux.HandleFunc("/register", handlers.Register)
+	mux.HandleFunc("/me", handlers.Me)
 
 	fmt.Println("Server is running on port 8080")
 
