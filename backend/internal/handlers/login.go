@@ -33,13 +33,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var username, passwordHash string
 
 	err := db.DB.QueryRow(
-		"SELECT id, username, password_hash FROM users WHERE email = ?",
-		logReq.Email).Scan(&id, &username, &passwordHash)
+		"SELECT id, password_hash FROM users WHERE email = ?",
+		logReq.Email).Scan(&id, &passwordHash)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid email or password"})
 		return
 	}
+
 
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(logReq.Password)); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -47,6 +48,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+
+	db.DB.Exec("DELETE FROM sessions WHERE user_id = ?", id)
+
 
 	sessionID := uuid.NewString()
 	expiry := time.Now().Add(24 * time.Hour)
