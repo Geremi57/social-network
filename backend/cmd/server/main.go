@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	// "social-network/backend/internal/db"
 	"social-network/backend/internal/db"
@@ -44,6 +45,20 @@ func main() {
 	mux.HandleFunc("/logout", handlers.Logout)
 	mux.HandleFunc("/register", handlers.Register)
 	mux.HandleFunc("/me", handlers.Me)
+	mux.HandleFunc("/users/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/posts") {
+			handlers.GetUserPosts(w, r)
+		} else {
+			handlers.GetUser(w, r)
+		}
+	})
+	mux.HandleFunc("/posts", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			handlers.SendPost(w, r)
+		} else if r.Method == http.MethodGet {
+			handlers.GetPosts(w, r)
+		}
+	})
 
 	fmt.Println("Server is running on port 8080")
 
