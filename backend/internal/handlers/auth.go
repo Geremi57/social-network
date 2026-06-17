@@ -70,7 +70,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		json.NewEncoder(w).Encode(map[string]string{"error": "email is already taken"})
 		return
 	}
 
