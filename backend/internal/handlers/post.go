@@ -35,10 +35,11 @@ func SendPost(w http.ResponseWriter, r *http.Request) {
 	).Scan(&userID)
 
 	var authorName string
+	var avatar string
 	db.DB.QueryRow(
-		"SELECT firstname FROM users WHERE id = ?",
+		"SELECT firstname, avatar FROM users WHERE id = ?",
 		userID,
-	).Scan(&authorName)
+	).Scan(&authorName, &avatar)
 
 	fmt.Println(authorName)
 
@@ -83,9 +84,11 @@ func SendPost(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	fmt.Println(avatar)
+
 	result, err := db.DB.Exec(
-		"INSERT INTO posts (user_id, content, author_name, image_path, privacy) VALUES (?, ?, ?, ?, ?)",
-		userID, content, authorName, imagePath, privacy,
+		"INSERT INTO posts (user_id, content, author_name, image_path, privacy, avatar) VALUES (?, ?, ?, ?, ?, ?)",
+		userID, content, authorName, imagePath, privacy, avatar,
 	)
 
 	if err != nil {
@@ -143,7 +146,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query(`
 		SELECT 
 			p.id, p.content, p.image_path, p.privacy, p.created_at,
-			u.id, u.firstname
+			u.id, u.firstname, p.avatar
 		FROM posts p
 		JOIN users u ON u.id = p.user_id
 		WHERE 
@@ -174,7 +177,8 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		Privacy   string `json:"privacy"`
 		CreatedAt string `json:"created_at"`
 		AuthorID  int    `json:"author_id"`
-		Username  string `json:"username"`
+		Firstname  string `json:"firstname"`
+		Avatar string `json:"avatar"`
 	}
 
 	posts := []Post{}
@@ -182,7 +186,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		var p Post
 		err := rows.Scan(
 			&p.ID, &p.Content, &p.ImagePath, &p.Privacy, &p.CreatedAt,
-			&p.AuthorID, &p.Username,
+			&p.AuthorID, &p.Firstname, &p.Avatar,
 		)
 		if err != nil {
 			log.Println("scan error:", err)
