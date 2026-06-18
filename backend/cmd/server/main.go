@@ -45,6 +45,14 @@ func main() {
 	mux.HandleFunc("/logout", handlers.Logout)
 	mux.HandleFunc("/register", handlers.Register)
 	mux.HandleFunc("/me", handlers.Me)
+	
+	mux.Handle(
+    "/uploads/",
+    http.StripPrefix(
+        "/uploads/",
+        http.FileServer(http.Dir("./uploads")),
+    ),
+)
 	mux.HandleFunc("/users/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/posts") {
 			handlers.GetUserPosts(w, r)
