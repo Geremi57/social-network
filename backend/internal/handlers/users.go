@@ -25,11 +25,12 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userID int
-	var firstName, lastName, email string
+	var firstName, lastName, email, avatar, about_me, nickname string
+	// var date_of_birth date
 	err = db.DB.QueryRow(
-		"SELECT id, firstname, lastname, email FROM users WHERE id = ?",
+		"SELECT id, firstname, lastname, email, avatar, about_me, nickname FROM users WHERE id = ?",
 		id,
-	).Scan(&userID, &firstName, &lastName, &email)
+	).Scan(&userID, &firstName, &lastName, &email, &avatar, &about_me, &nickname)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "user not found"})
@@ -42,6 +43,9 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		"firstname": firstName,
 		"lastname":  lastName,
 		"email":     email,
+		"avatar":    avatar,
+		"aboutme":   about_me,
+		"nickname":  nickname,
 	})
 }
 
@@ -78,7 +82,7 @@ func GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query(`
 		SELECT 
     p.id, p.content, p.image_path, p.privacy, p.created_at,
-    u.id, u.firstname
+    u.id, u.firstname, u.avatar
 FROM posts p
 JOIN users u ON u.id = p.user_id
 WHERE p.user_id = ?
@@ -112,12 +116,13 @@ ORDER BY p.created_at DESC
 		CreatedAt string `json:"created_at"`
 		AuthorID  int    `json:"author_id"`
 		Firstname string `json:"firstname"`
+		Avatar string `json:"avatar"`
 	}
 
 	posts := []Post{}
 	for rows.Next() {
 		var p Post
-		if err := rows.Scan(&p.ID, &p.Content, &p.ImagePath, &p.Privacy, &p.CreatedAt, &p.AuthorID, &p.Firstname); err != nil {
+		if err := rows.Scan(&p.ID, &p.Content, &p.ImagePath, &p.Privacy, &p.CreatedAt, &p.AuthorID, &p.Firstname, &p.Avatar); err != nil {
 			log.Println("scan error:", err)
 			continue
 		}
