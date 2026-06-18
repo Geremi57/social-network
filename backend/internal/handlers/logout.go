@@ -43,13 +43,13 @@ func Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userID int
-	var username, email string
+	var username, email, avatar string
 	err = db.DB.QueryRow(`
-        SELECT u.id, u.firstname, u.email 
+        SELECT u.id, u.firstname, u.email, u.avatar 
         FROM users u 
         JOIN sessions s ON s.user_id = u.id 
         WHERE s.id = ? AND s.expires_at > CURRENT_TIMESTAMP
-    `, cookie.Value).Scan(&userID, &username, &email)
+    `, cookie.Value).Scan(&userID, &username, &email, &avatar)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "session expired"})
@@ -61,5 +61,6 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		"id":       userID,
 		"firstname": username,
 		"email":    email,
+		"avatar": avatar,
 	})
 }
