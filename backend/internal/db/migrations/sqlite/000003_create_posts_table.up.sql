@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     author_name TEXT NOT NULL,
+    avatar TEXT,
     content TEXT NOT NULL,
     image_path TEXT,
     privacy TEXT NOT NULL DEFAULT 'public' CHECK(privacy IN ('public', 'almost_private', 'private')),
