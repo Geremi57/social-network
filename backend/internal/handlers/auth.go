@@ -3,8 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"social-network/backend/internal/db"
@@ -19,10 +22,14 @@ type AuthHandler struct {
 }
 
 type RegisterRequest struct {
-	FirstName     string `json:"firstName"`
-	LastName string `json:"lastName"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	DateOfBirth string `json:"dateOfBirth"`
+	AboutMe     string `json:"aboutMe"`
+	Nickname    string `json:"nickname"`
+	Avatar      string `json:"avatar"`
 }
 
 func ShowRegister(w http.ResponseWriter, r *http.Request) {
@@ -48,12 +55,49 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// }
 	w.Header().Set("Content-Type", "application/json")
 
-	var req RegisterRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "invalid request body"})
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
+	}
+
+	req := RegisterRequest{
+		FirstName:   r.FormValue("firstName"),
+		LastName:    r.FormValue("lastName"),
+		Email:       r.FormValue("email"),
+		Password:    r.FormValue("password"),
+		DateOfBirth: r.FormValue("dateOfBirth"),
+		Nickname:    r.FormValue("nickname"),
+		AboutMe:     r.FormValue("aboutMe"),
+	}
+
+	file, header, err := r.FormFile("avatar")
+	if err == nil {
+		defer file.Close()
+
+		os.MkdirAll("uploads", os.ModePerm)
+
+		filePath := filepath.Join("uploads", header.Filename)
+
+		dst, err := os.Create(filePath)
+		if err != nil {
+			log.Println(err)
+		} else {
+			defer dst.Close()
+
+			_, err = io.Copy(dst, file)
+if err != nil {
+    log.Println("copy error:", err)
+} else {
+    log.Println("avatar saved successfully")
+}
+			if err != nil {
+				log.Println(err)
+			}
+
+			req.Avatar = filePath
+		}
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -64,10 +108,10 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.DB.Exec(
-		"INSERT INTO users (firstname, lastname, email, password_hash) VALUES (?, ?, ?, ?)",
-		req.FirstName, req.LastName, req.Email, string(hash),
+		"INSERT INTO users (firstname, lastname, password_hash, date_of_birth, email, avatar, about_me, nickname) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		req.FirstName, req.LastName, string(hash), req.DateOfBirth, req.Email, req.Avatar, req.AboutMe, req.Nickname,
 	)
-	
+
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]string{"error": "email is already taken"})
@@ -89,7 +133,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	sessionID := uuid.NewString()
 	expiry := time.Now().Add(24 * time.Hour)
 
