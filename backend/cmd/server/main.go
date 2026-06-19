@@ -45,14 +45,14 @@ func main() {
 	mux.HandleFunc("/logout", handlers.Logout)
 	mux.HandleFunc("/register", handlers.Register)
 	mux.HandleFunc("/me", handlers.Me)
-	
+
 	mux.Handle(
-    "/uploads/",
-    http.StripPrefix(
-        "/uploads/",
-        http.FileServer(http.Dir("./uploads")),
-    ),
-)
+		"/uploads/",
+		http.StripPrefix(
+			"/uploads/",
+			http.FileServer(http.Dir("./uploads")),
+		),
+	)
 	mux.HandleFunc("/users/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/posts") {
 			handlers.GetUserPosts(w, r)
@@ -65,6 +65,14 @@ func main() {
 			handlers.SendPost(w, r)
 		} else if r.Method == http.MethodGet {
 			handlers.GetPosts(w, r)
+		}
+	})
+
+	mux.HandleFunc("/posts/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/like") && r.Method == http.MethodPost {
+			handlers.Like(w, r)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
 		}
 	})
 
