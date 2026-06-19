@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"social-network/backend/internal/db"
 	"strconv"
 )
@@ -80,8 +82,22 @@ func SendPost(w http.ResponseWriter, r *http.Request) {
 
 	if err == nil {
 		defer file.Close()
+
+		if mkErr := os.MkdirAll("uploads", 0755); mkErr != nil {
+			log.Println("failed to create uploads dir:", mkErr)
+		}
+
 		imagePath = "uploads/" + strconv.Itoa(userID) + "_" + header.Filename
 
+		dst, createErr := os.Create(imagePath)
+		if createErr != nil {
+			log.Println("failed to create file on disk:", createErr)
+		} else {
+			defer dst.Close()
+			if _, copyErr := io.Copy(dst, file); copyErr != nil {
+				log.Println("failed to write file to disk:", copyErr)
+			}
+		}
 	}
 
 	fmt.Println(avatar)
@@ -177,8 +193,8 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		Privacy   string `json:"privacy"`
 		CreatedAt string `json:"created_at"`
 		AuthorID  int    `json:"author_id"`
-		Firstname  string `json:"firstname"`
-		Avatar string `json:"avatar"`
+		Firstname string `json:"firstname"`
+		Avatar    string `json:"avatar"`
 	}
 
 	posts := []Post{}
