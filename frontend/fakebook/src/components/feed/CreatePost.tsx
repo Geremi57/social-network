@@ -4,8 +4,11 @@ import { Image, Smile, MapPin, Globe } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { postService } from "@/services/mockApi";
+import { Input } from "@/components/ui/input";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+
 
 type Privacy = "public" | "almost_private" | "private";
 
@@ -19,6 +22,9 @@ export function CreatePost() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+    const [avatar, setAvatar] = useState<File | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
 
   const user = useAuthStore((s) => s.user);
   const [text, setText] = useState("");
@@ -31,6 +37,13 @@ export function CreatePost() {
       toast.success("Post shared");
     },
   });
+
+   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImage(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +58,7 @@ export function CreatePost() {
       setError("Please select at least one follower for a private post");
       return;
     }
+
 
     setIsLoading(true);
 
@@ -100,9 +114,48 @@ console.log(user)
           />
           <div className="mt-2 flex items-center justify-between border-t pt-3">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
-                <Image className="h-4 w-4" /> <span className="hidden sm:inline">Photo</span>
-              </Button>
+              <div className="flex items-center gap-3">
+  {avatarPreview && (
+    <img
+      src={avatarPreview}
+      alt="Avatar preview"
+      className="h-12 w-12 rounded-full object-cover border"
+    />
+  )}
+
+  <Button
+    type="button"
+    variant="outline"
+    size="sm"
+    onClick={() => fileInputRef.current?.click()}
+  >
+    <Image className="h-4 w-4 mr-2" />
+    Choose Image
+  </Button>
+
+  <Input
+    ref={fileInputRef}
+    type="file"
+    accept="image/jpeg,image/png,image/gif"
+    onChange={handleAvatarChange}
+    className="hidden"
+  />
+</div>
+              {/* <div className="space-y-1.5">
+          <Label>
+            Avatar <span className="text-muted-foreground text-xs">(optional)</span>
+          </Label>
+          <div className="flex items-center gap-3">
+            {avatarPreview && (
+              <img
+                src={avatarPreview}
+                alt="avatar preview"
+                // className="h-12 w-12 rounded-full object-cover border"
+              />
+            )}
+            <Input type="file" accept="image/jpeg,image/png,image/gif" onChange={handleAvatarChange} />
+          </div>
+        </div> */}
               <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
                 <Smile className="h-4 w-4" /> <span className="hidden sm:inline">Feeling</span>
               </Button>
