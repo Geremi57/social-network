@@ -1,8 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, MoreHorizontal, Globe, Users as UsersIcon, Lock } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Globe, Users as UsersIcon, Lock } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+
 
 interface Post {
   id: number;
@@ -13,6 +16,8 @@ interface Post {
   author_id: number;
   firstname: string;
   avatar: string;
+  likes_count: number;
+  liked_by_me: boolean;
 }
 
 const PRIVACY: Record<string, { Icon: typeof Globe; label: string }> = {
@@ -32,7 +37,43 @@ function timeAgo(dateStr: string) {
 }
 
 export function PostCard({ post }: { post: Post }) {
-  const Priv = PRIVACY[post.privacy] ?? PRIVACY.public;
+  
+  // const author = postService.getAuthor(post.authorId);
+  const qc = useQueryClient();
+  const [optimistic, setOptimistic] = useState<{ liked: boolean; likes: number } | null>(null);
+
+   const likeMut = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`http://localhost:8080/posts/${post.id}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to toggle like");
+      return res.json();
+    },
+    onMutate: () => {
+      setOptimistic({
+        liked: !post.liked_by_me,
+        count: post.likes_count + (post.liked_by_me ? -1 : 1),
+      });
+    },
+    onError: () => {
+      setOptimistic(null);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      qc.invalidateQueries({ queryKey: ["user-posts"] });
+    },
+
+    
+  });
+
+  // const Priv = PRIVACY[post.privacy] ?? PRIVACY.public;
+
+   const liked = optimistic?.liked ?? post.liked_by_me;
+  const likesCount = optimistic?.count ?? post.likes_count;
+
+  const Priv = PRIVACY[post.privacy];
 
   return (
     <article className="surface-card overflow-hidden">
@@ -80,7 +121,20 @@ export function PostCard({ post }: { post: Post }) {
         </div>
       )}
 
+      {likesCount > 0 && (
+        <div className="px-4 py-2 text-xs text-muted-foreground border-t">
+          {likesCount} {likesCount === 1 ? "like" : "likes"}
+        </div>
+      )}
+
       <div className="px-2 pb-2 grid grid-cols-2 gap-1 border-t pt-1">
+        <Action
+          onClick={() => likeMut.mutate()}
+          active={liked}
+          activeClass="text-rose-500"
+          icon={<Heart className={cn("h-[18px] w-[18px]", liked && "fill-current")} />}
+          label="Like"
+        />
         <Action icon={<MessageCircle className="h-[18px] w-[18px]" />} label="Comment" />
       </div>
     </article>
