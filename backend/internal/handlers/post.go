@@ -162,10 +162,27 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query(`
 		SELECT 
 			p.id, p.content, p.image_path, p.privacy, p.created_at,
-			u.id, u.firstname, p.avatar
-		FROM posts p
-		JOIN users u ON u.id = p.user_id
-		WHERE 
+			u.id, u.firstname, p.avatar,
+
+
+			(SELECT COUNT(*)
+ FROM reactions
+ WHERE post_id = p.id
+ AND value = 1) AS likes_count,
+
+EXISTS (
+ SELECT 1
+ FROM reactions
+ WHERE post_id = p.id
+ AND user_id = ?
+ AND value = 1
+) AS liked_by_me
+		
+			FROM posts p
+		
+			JOIN users u ON u.id = p.user_id
+		
+			WHERE 
 			p.privacy = 'public'
 			OR p.user_id = ?
 			OR (p.privacy = 'almost_private' AND EXISTS (
@@ -177,7 +194,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 				WHERE post_id = p.id AND user_id = ?
 			))
 		ORDER BY p.created_at DESC
-	`, userID, userID, userID)
+	`, userID, userID, userID, userID)
 	if err != nil {
 		log.Println("failed to fetch posts:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -187,14 +204,16 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type Post struct {
-		ID        int    `json:"id"`
-		Content   string `json:"content"`
-		ImagePath string `json:"image_path"`
-		Privacy   string `json:"privacy"`
-		CreatedAt string `json:"created_at"`
-		AuthorID  int    `json:"author_id"`
-		Firstname string `json:"firstname"`
-		Avatar    string `json:"avatar"`
+		ID         int    `json:"id"`
+		Content    string `json:"content"`
+		ImagePath  string `json:"image_path"`
+		Privacy    string `json:"privacy"`
+		CreatedAt  string `json:"created_at"`
+		AuthorID   int    `json:"author_id"`
+		Firstname  string `json:"firstname"`
+		Avatar     string `json:"avatar"`
+		LikesCount int `json:"likes_count"`
+		LikedByMe   bool `json:"liked_by_me"`
 	}
 
 	posts := []Post{}
@@ -202,7 +221,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 		var p Post
 		err := rows.Scan(
 			&p.ID, &p.Content, &p.ImagePath, &p.Privacy, &p.CreatedAt,
-			&p.AuthorID, &p.Firstname, &p.Avatar,
+			&p.AuthorID, &p.Firstname, &p.Avatar, &p.LikesCount, &p.LikedByMe,
 		)
 		if err != nil {
 			log.Println("scan error:", err)
