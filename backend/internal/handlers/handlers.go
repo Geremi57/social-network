@@ -35,11 +35,3 @@ func createNotification(recipientID int, notifType string, actorID, entityID int
 		VALUES (?, ?, ?, ?, ?)
 	`, recipientID, notifType, actorID, entityID, entityType)
 }
-
-func isGroupMember(groupID, userID int) bool {
-	var exists int
-	db.DB.QueryRow(`
-		SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'active'
-	`, groupID, userID).Scan(&exists)
-	return exists == 1
-}
