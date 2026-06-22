@@ -44,6 +44,8 @@ interface Post {
   firstname: string;
   nickname: string
   avatar: string;
+  likes_count: number;
+  liked_by_me: boolean;
 }
 
 function ProfilePage() {
@@ -83,7 +85,7 @@ function ProfilePage() {
       <div className="px-3 sm:px-5 lg:px-8 pt-6">
         <div className="flex items-end gap-4 justify-between">
           <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-4 border-background shadow-elevated">
-            <AvatarImage src={`http://localhost:8080/${profile.avatar}`} alt={profile.firstname} />
+            <AvatarImage src={`http://localhost:8080/${profile.avatar}`} alt={profile.firstname?.[0]} />
             <AvatarFallback className="text-2xl">
               {profile.firstname?.[0]}
             </AvatarFallback>
