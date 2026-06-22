@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"social-network/backend/internal/db"
 	"strconv"
 	"strings"
 
-	"social-network/backend/internal/db"
+	"social-net/internal/middlewares"
+	"social-net/internal/response"
 )
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +49,31 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		"aboutme":   about_me,
 		"nickname":  nickname,
 	})
+}
+
+type privacyRequest struct {
+	IsPublic bool `json:"is_public"`
+}
+
+func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middlewares.GetUserID(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "not logged in")
+		return
+	}
+
+	var req privacyRequest
+	if err := decodeJSON(r, &req); err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	val := 0
+	if req.IsPublic {
+		val = 1
+	}
+	db.DB.Exec("UPDATE users SET is_public = ? WHERE id = ?", val, userID)
+	response.JSON(w, http.StatusOK, map[string]any{"is_public": req.IsPublic})
 }
 
 func GetUserPosts(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +143,7 @@ ORDER BY p.created_at DESC
 		CreatedAt string `json:"created_at"`
 		AuthorID  int    `json:"author_id"`
 		Firstname string `json:"firstname"`
-		Avatar string `json:"avatar"`
+		Avatar    string `json:"avatar"`
 	}
 
 	posts := []Post{}
