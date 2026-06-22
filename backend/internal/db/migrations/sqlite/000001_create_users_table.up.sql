@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS users(
 		avatar TEXT,
 		about_me TEXT,
 		nickname TEXT,
+		is_public BOOLEAN,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);
+	);
