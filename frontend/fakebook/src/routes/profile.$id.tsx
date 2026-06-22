@@ -7,6 +7,8 @@ import { PostCard } from "@/components/feed/PostCard";
 import { Mail, MoreHorizontal } from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
 import { useEffect, useState } from "react";
+// import { fmtCount } from "@/lib/format";
+
 // import { Post } from ".";
 
 export const Route = createFileRoute("/profile/$id")({
@@ -18,10 +20,14 @@ export interface ProfileData {
   id: number;
   firstname: string;
   lastname: string;
-  email: string;
+  email?: string;
   avatar: string;
-  aboutme: string;
-  nickname: string;
+  aboutme?: string;
+  nickname?: string;
+  is_public: boolean;
+  isfollowing: boolean;
+  restricted: boolean;
+  follow_status: "none" | "pending" | "following";
 }
 
 // interface Post {
@@ -56,6 +62,7 @@ function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  
 
  useEffect(() => {
   fetch(`http://localhost:8080/users/${id}`, { credentials: "include" })
@@ -77,8 +84,117 @@ function ProfilePage() {
       </AppShell>
     );
   }
-  console.log(profile.avatar)
-  console.log(posts)
+  console.log(profile.isfollowing)
+
+  const handleFollow = async () => {
+      console.log("Follow button clicked", profile.follow_status);
+
+    if (profile?.follow_status === "following") {
+  const res = await fetch(
+    `http://localhost:8080/unfollow/${id}`,
+    {
+      method: "POST",
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) return;
+
+  setProfile(prev =>
+    prev
+      ? {
+          ...prev,
+          follow_status: "none",
+        }
+      : null
+  );
+
+
+const refreshed = await fetch(
+  `http://localhost:8080/users/${id}`,
+  { credentials: "include" }
+);
+
+if (refreshed.ok) {
+  setProfile(await refreshed.json());
+}
+
+const refreshedPosts = await fetch(
+  `http://localhost:8080/users/${id}/posts`,
+  { credentials: "include" }
+);
+
+if (refreshedPosts.ok) {
+  setPosts(await refreshedPosts.json());
+}
+
+return;
+
+}
+
+    try {
+      const res = await fetch(`http://localhost:8080/follow/${id}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data.error);
+        return;
+      }
+
+      // if(profile.isfollowing == true){
+      //   profile.follow_status = "following"
+      // }else{
+      //    profile.follow_status = "following"
+
+      // }
+
+      if (data.status === "following") {
+        // setFollowStatus("following");
+        setProfile(prev =>
+  prev
+    ? {
+        ...prev,
+        follow_status: "following",
+      }
+    : null
+);
+
+
+        
+      } else if (data.status === "pending") {
+        // setFollowStatus("pending");
+        setProfile(prev =>
+  prev
+    ? {
+        ...prev,
+        follow_status: "pending",
+      }
+    : null
+);
+
+
+      }
+      const refreshed = await fetch(`http://localhost:8080/users/${id}`, { credentials: "include" });
+        if (refreshed.ok) setProfile(await refreshed.json());
+
+        const refreshedPosts = await fetch(`http://localhost:8080/users/${id}/posts`, { credentials: "include" });
+        if (refreshedPosts.ok) setPosts(await refreshedPosts.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  
+
+  
+
+ 
+
+
+  console.log(profile.follow_status)
 
   return (
     <AppShell>
@@ -92,7 +208,7 @@ function ProfilePage() {
           </Avatar>
 
           <div className="flex gap-2 pb-1">
-            {isOwn ? (
+                 {isOwn ? (
               <>
                 <Button variant="outline" size="sm">Edit profile</Button>
                 <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -105,7 +221,19 @@ function ProfilePage() {
                   <Mail className="h-4 w-4 mr-1.5" />
                   Message
                 </Button>
-                <Button variant="outline" size="sm">Follow</Button>
+                <Button
+  variant="outline"
+  size="sm"
+  // disabled={
+  //   profile.follow_status === "pending"}
+  onClick={handleFollow}
+>
+  {profile.follow_status === "following"
+    ? "Unfollow"
+    : profile.follow_status === "pending"
+    ? "Requested"
+    : "Follow"}
+</Button>
               </>
             )}
           </div>
@@ -123,9 +251,29 @@ function ProfilePage() {
               {/* {user.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{user.location}</span>} */}
               {/* <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" />Joined {new Date(profile.).toLocaleDateString(undefined, { month: "long", year: "numeric" })}</span> */}
             </div>
+            {/* <div className="mt-3 flex gap-5 text-sm">
+              <span><b className="font-semibold">{fmtCount(user.following)}</b> <span className="text-muted-foreground">Following</span></span>
+              <span><b className="font-semibold">{fmtCount(user.followers)}</b> <span className="text-muted-foreground">Followers</span></span>
+            </div> */}
       </div>
 
+      {profile.restricted ? (
+  <div className="surface-card p-10 text-center">
+    <p className="text-sm font-medium">This account is private</p>
+    <p className="text-sm text-muted-foreground mt-1">
+      Follow {profile.firstname} to see their posts.
+    </p>
+  </div>
+) : (
+
       <Tabs defaultValue="posts" className="mt-6">
+        {/* <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-1">
+          {["posts","media","about","followers","following"].map((t) => (
+            <TabsTrigger key={t} value={t} className="capitalize rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2">
+              {t}
+            </TabsTrigger>
+          ))}
+        </TabsList> */}
         <TabsList className="w-full justify-start bg-transparent border-b rounded-none h-auto p-0 gap-1">
           <TabsTrigger value="posts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary px-4 py-2">
             Posts
@@ -147,7 +295,7 @@ function ProfilePage() {
           <Row label="Email" value={profile.email} />
         </TabsContent>
       </Tabs>
-    </AppShell>
+  )}  </AppShell>
   );
 }
 
