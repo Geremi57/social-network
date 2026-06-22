@@ -35,6 +35,7 @@ export function Sidebar() {
     refetchInterval: 60000,
   });
 
+  console.log(user)
   return (
     <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground h-dvh sticky top-0">
       <div className="px-5 pt-5 pb-3">
@@ -105,7 +106,7 @@ export function Sidebar() {
             className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent/60 transition-colors"
           >
             <Avatar className="h-9 w-9">
-              {/* <AvatarImage src={user.avatar} alt={user?.firstname} /> */}
+              <AvatarImage src={`http://localhost:8080/${user?.avatar}`} alt={user?.firstname} />
               <AvatarFallback>{user?.firstname?.[0]}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
