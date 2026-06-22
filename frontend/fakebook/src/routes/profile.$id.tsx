@@ -28,6 +28,7 @@ export interface ProfileData {
   isfollowing: boolean;
   restricted: boolean;
   follow_status: "none" | "pending" | "following";
+  followers: number;
 }
 
 // interface Post {
@@ -251,10 +252,10 @@ return;
               {/* {user.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{user.location}</span>} */}
               {/* <span className="inline-flex items-center gap-1.5"><Calendar className="h-4 w-4" />Joined {new Date(profile.).toLocaleDateString(undefined, { month: "long", year: "numeric" })}</span> */}
             </div>
-            {/* <div className="mt-3 flex gap-5 text-sm">
-              <span><b className="font-semibold">{fmtCount(user.following)}</b> <span className="text-muted-foreground">Following</span></span>
-              <span><b className="font-semibold">{fmtCount(user.followers)}</b> <span className="text-muted-foreground">Followers</span></span>
-            </div> */}
+            <div className="mt-3 flex gap-5 text-sm">
+              {/* <span><b className="font-semibold">{profile.following)}</b> <span className="text-muted-foreground">Following</span></span> */}
+              <span><b className="font-semibold">{profile.followers}</b> <span className="text-muted-foreground">Followers</span></span>
+            </div>
       </div>
 
       {profile.restricted ? (
