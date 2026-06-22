@@ -10,6 +10,20 @@ import { useUIStore } from "@/stores/ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Moon, SunMedium, Bell, Eye, Lock, AccessibilityIcon, User } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
+
+export interface ProfileData {
+  id: number;
+  firstname: string;
+  lastname: string;
+  email: string;
+  avatar: string;
+  aboutme: string;
+  nickname: string;
+}
+
+
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Pulse" }] }),
@@ -17,9 +31,26 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
+ 
+
+
   const user = useAuthStore((s) => s.user);
+    const [profile, setProfile] = useState<ProfileData | null>(null);
   const { theme, setTheme } = useUIStore();
+  // const id = `http://localhost:8080/${user?.id}`
   if (!user) return null;
+
+   useEffect(() => {
+  fetch(`http://localhost:8080/users/${user.id}`, { credentials: "include" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => setProfile(data))
+    .catch(() => setProfile(null));
+}, [user.id]);
+
+  // const params = 
+  // console.log(id)
+
+  console.log(user)
   return (
     <AppShell>
       <header className="mb-6">
@@ -46,15 +77,15 @@ function SettingsPage() {
               <Card title="Profile">
                 <div className="flex items-center gap-4 mb-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                    <AvatarImage src={`http://localhost:8080/${user.avatar}`} alt={user?.firstname} />
+                    <AvatarFallback>{user?.firstname?.[0]}</AvatarFallback>
                   </Avatar>
                   <Button variant="outline" size="sm">Change avatar</Button>
                 </div>
-                <Field label="Display name" defaultValue={user.name} />
-                <Field label="Handle" defaultValue={user.handle} prefix="@" />
-                <Field label="Bio" defaultValue={user.bio} />
-                <Field label="Location" defaultValue={user.location} />
+                <Field label="Display name" defaultValue={user.firstname} />
+                <Field label="Handle" defaultValue={profile?.nickname} prefix="@" />
+                <Field label="Bio" defaultValue={profile?.aboutme} />
+                {/* <Field label="Location" defaultValue={user.location} /> */}
                 <div className="pt-2">
                   <Button onClick={() => toast.success("Profile saved")}>Save changes</Button>
                 </div>
