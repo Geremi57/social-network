@@ -73,16 +73,27 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if followStatus == "none" {
-    err = db.DB.QueryRow(
-        `SELECT 1 FROM follow_requests WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'`,
-        requesterID,
-        userID,
-    ).Scan(&numb)
+		err = db.DB.QueryRow(
+			`SELECT 1 FROM follow_requests WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'`,
+			requesterID,
+			userID,
+		).Scan(&numb)
 
-    if err == nil {
-        followStatus = "pending"
-    }
-}
+		if err == nil {
+			followStatus = "pending"
+		}
+	}
+
+	var followersCount int
+
+	err = db.DB.QueryRow(
+		"SELECT COUNT(*) FROM followers WHERE following_id = ?",
+		userID,
+	).Scan(&followersCount)
+
+	if err != nil {
+		followersCount = 0
+	}
 
 	restricted := !isPublic && !isOwn && !isFollowing
 
@@ -91,31 +102,33 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	if restricted {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"id":         userID,
-			"firstname":  firstName,
-			"lastname":   lastName,
-			"avatar":     avatar,
-			"is_public":  isPublic,
-			"restricted": true,
+			"id":            userID,
+			"firstname":     firstName,
+			"lastname":      lastName,
+			"avatar":        avatar,
+			"is_public":     isPublic,
+			"restricted":    true,
 			"follow_status": followStatus,
-			"isfollowing": false,
+			"isfollowing":   false,
+			"followers": followersCount,
 		})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":         userID,
-		"firstname":  firstName,
-		"lastname":   lastName,
-		"email":      email,
-		"avatar":     avatar,
-		"aboutme":    about_me,
-		"nickname":   nickname,
-		"is_public":  isPublic,
+		"id":            userID,
+		"firstname":     firstName,
+		"lastname":      lastName,
+		"email":         email,
+		"avatar":        avatar,
+		"aboutme":       about_me,
+		"nickname":      nickname,
+		"is_public":     isPublic,
 		"follow_status": followStatus,
-		"restricted": false,
-		"isfollowing": isFollowing,
+		"restricted":    false,
+		"isfollowing":   isFollowing,
+		"followers": followersCount,
 	})
 }
 
