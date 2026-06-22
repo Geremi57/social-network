@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"social-network/backend/internal/db"
 	"time"
 
-	"github.com/google/uuid"
+	"social-net/internal/db"
+
+	uuid "github.com/gofrs/uuid/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -131,7 +132,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID := uuid.NewString()
+	addUid, err := uuid.NewV4()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Internal server breaked -v-"})
+		return
+	}
+
+	sessionID := addUid.String()
 	expiry := time.Now().Add(24 * time.Hour)
 
 	_, err = db.DB.Exec("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
