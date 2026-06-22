@@ -98,7 +98,7 @@ console.log(user)
       <div className="flex gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={user.avatar ? `http://localhost:8080/${user.avatar}` : undefined} alt={user.firstname} />
-          {/* <AvatarFallback>{user?.firstname?.[0]}</AvatarFallback> */}
+          <AvatarFallback>{user?.firstname?.[0]}</AvatarFallback>
         </Avatar>
 
        <form onSubmit={handleSubmit} className="space-y-5">
@@ -156,12 +156,12 @@ console.log(user)
             <Input type="file" accept="image/jpeg,image/png,image/gif" onChange={handleAvatarChange} />
           </div>
         </div> */}
-              <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
+              {/* <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
                 <Smile className="h-4 w-4" /> <span className="hidden sm:inline">Feeling</span>
               </Button>
               <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
                 <MapPin className="h-4 w-4" /> <span className="hidden sm:inline">Location</span>
-              </Button>
+              </Button> */}
               <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 h-8">
                 <Globe className="h-4 w-4" /> <span className="hidden sm:inline">Public</span>
               </Button>

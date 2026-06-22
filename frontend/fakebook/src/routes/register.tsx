@@ -23,7 +23,7 @@ function RegisterPage() {
   const [aboutMe, setAboutMe] = useState("");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
+const [isPublic, setIsPublic] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +62,7 @@ function RegisterPage() {
       formData.append("email", email);
       formData.append("password", password);
       formData.append("dateOfBirth", dateOfBirth);
+      formData.append("isPublic", String(isPublic));
 
       if (nickname) formData.append("nickname", nickname);
       if (aboutMe) formData.append("aboutMe", aboutMe);
@@ -160,6 +161,22 @@ function RegisterPage() {
             <Input type="file" accept="image/jpeg,image/png,image/gif" onChange={handleAvatarChange} />
           </div>
         </div>
+
+        <div className="flex items-center gap-2">
+  <input
+    type="checkbox"
+    id="isPublic"
+    checked={isPublic}
+    onChange={(e) => setIsPublic(e.target.checked)}
+    className="h-4 w-4"
+  />
+  <Label htmlFor="isPublic" className="cursor-pointer">
+    Public profile
+    <span className="block text-xs text-muted-foreground font-normal">
+      Anyone can see your posts and follow you instantly. Uncheck for a private profile where followers must request access.
+    </span>
+  </Label>
+</div>
 
          {error && (
             <p className="text-sm text-destructive">{error}</p>

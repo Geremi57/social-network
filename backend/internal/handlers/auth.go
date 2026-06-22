@@ -30,6 +30,7 @@ type RegisterRequest struct {
 	AboutMe     string `json:"aboutMe"`
 	Nickname    string `json:"nickname"`
 	Avatar      string `json:"avatar"`
+	IsPublic   string 	`json:"isPublic"`
 }
 
 func ShowRegister(w http.ResponseWriter, r *http.Request) {
@@ -70,9 +71,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		DateOfBirth: r.FormValue("dateOfBirth"),
 		Nickname:    r.FormValue("nickname"),
 		AboutMe:     r.FormValue("aboutMe"),
+		IsPublic:    r.FormValue("isPublic"),
 	}
 
-	file, header, err := r.FormFile("avatar")
+		file, header, err := r.FormFile("avatar")
+
 	if err == nil {
 		defer file.Close()
 
@@ -107,9 +110,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isPublic := req.IsPublic == "true"
+
+
 	_, err = db.DB.Exec(
-		"INSERT INTO users (firstname, lastname, password_hash, date_of_birth, email, avatar, about_me, nickname) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		req.FirstName, req.LastName, string(hash), req.DateOfBirth, req.Email, req.Avatar, req.AboutMe, req.Nickname,
+		"INSERT INTO users (firstname, lastname, password_hash, date_of_birth, email, avatar, about_me, nickname, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		req.FirstName, req.LastName, string(hash), req.DateOfBirth, req.Email, req.Avatar, req.AboutMe, req.Nickname, isPublic,
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)

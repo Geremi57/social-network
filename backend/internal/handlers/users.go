@@ -26,28 +26,111 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "not logged in"})
+		return
+	}
+
+	var requesterID int
+	err = db.DB.QueryRow(
+		"SELECT user_id FROM sessions WHERE id = ? AND expires_at > CURRENT_TIMESTAMP",
+		cookie.Value,
+	).Scan(&requesterID)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "session expired"})
+		return
+	}
+
 	var userID int
 	var firstName, lastName, email, avatar, about_me, nickname string
-	// var date_of_birth date
+	var isPublic bool
+
 	err = db.DB.QueryRow(
-		"SELECT id, firstname, lastname, email, avatar, about_me, nickname FROM users WHERE id = ?",
+		"SELECT id, firstname, lastname, email, avatar, about_me, nickname, is_public FROM users WHERE id = ?",
 		id,
-	).Scan(&userID, &firstName, &lastName, &email, &avatar, &about_me, &nickname)
+	).Scan(&userID, &firstName, &lastName, &email, &avatar, &about_me, &nickname, &isPublic)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "user not found"})
 		return
 	}
 
+	followStatus := "none"
+
+	isOwn := requesterID == userID
+
+	var isFollowing bool
+	var numb int
+	err = db.DB.QueryRow(
+		"SELECT 1 FROM followers WHERE follower_id = ? AND following_id = ?",
+		strconv.Itoa(requesterID), strconv.Itoa(userID),
+	).Scan(new(int))
+	isFollowing = (err == nil)
+
+	if err == nil {
+		followStatus = "following"
+	}
+
+	if followStatus == "none" {
+		err = db.DB.QueryRow(
+			`SELECT 1 FROM follow_requests WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'`,
+			requesterID,
+			userID,
+		).Scan(&numb)
+
+		if err == nil {
+			followStatus = "pending"
+		}
+	}
+
+	var followersCount int
+
+	err = db.DB.QueryRow(
+		"SELECT COUNT(*) FROM followers WHERE following_id = ?",
+		userID,
+	).Scan(&followersCount)
+
+	if err != nil {
+		followersCount = 0
+	}
+
+	restricted := !isPublic && !isOwn && !isFollowing
+
+	fmt.Println(followStatus)
+
+	if restricted {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"id":            userID,
+			"firstname":     firstName,
+			"lastname":      lastName,
+			"avatar":        avatar,
+			"is_public":     isPublic,
+			"restricted":    true,
+			"follow_status": followStatus,
+			"isfollowing":   false,
+			"followers": followersCount,
+		})
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":        userID,
-		"firstname": firstName,
-		"lastname":  lastName,
-		"email":     email,
-		"avatar":    avatar,
-		"aboutme":   about_me,
-		"nickname":  nickname,
+		"id":            userID,
+		"firstname":     firstName,
+		"lastname":      lastName,
+		"email":         email,
+		"avatar":        avatar,
+		"aboutme":       about_me,
+		"nickname":      nickname,
+		"is_public":     isPublic,
+		"follow_status": followStatus,
+		"restricted":    false,
+		"isfollowing":   isFollowing,
+		"followers": followersCount,
 	})
 }
 
@@ -103,6 +186,29 @@ func GetUserPosts(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "session expired"})
+		return
+	}
+
+	var isPublic bool
+	err = db.DB.QueryRow("SELECT is_public FROM users WHERE id = ?", id).Scan(&isPublic)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "user not found"})
+		return
+	}
+
+	isOwn := requesterID == id
+
+	var isFollowing bool
+	err = db.DB.QueryRow(
+		"SELECT 1 FROM followers WHERE follower_id = ? AND following_id = ?",
+		strconv.Itoa(requesterID), strconv.Itoa(id),
+	).Scan(new(int))
+	isFollowing = (err == nil)
+
+	if !isPublic && !isOwn && !isFollowing {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode([]interface{}{}) // empty array, not an error
 		return
 	}
 

@@ -76,6 +76,16 @@ func main() {
 		}
 	})
 
+	mux.HandleFunc("/follow/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			handlers.FollowUser(w, r)
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
+		mux.HandleFunc("/unfollow/", handlers.Unfollow)
+
+
 	fmt.Println("Server is running on port 8080")
 
 	log.Fatal(http.ListenAndServe(":8080", middlewares.EnableCORS(mux)))
