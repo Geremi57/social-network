@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"social-network/backend/internal/db"
+	"social-net/internal/db"
 	"strconv"
 	"strings"
 )
