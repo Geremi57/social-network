@@ -29,6 +29,7 @@ export interface ProfileData {
   restricted: boolean;
   follow_status: "none" | "pending" | "following";
   followers: number;
+  following: number;
 }
 
 // interface Post {
@@ -255,6 +256,8 @@ return;
             <div className="mt-3 flex gap-5 text-sm">
               {/* <span><b className="font-semibold">{profile.following)}</b> <span className="text-muted-foreground">Following</span></span> */}
               <span><b className="font-semibold">{profile.followers}</b> <span className="text-muted-foreground">Followers</span></span>
+              <span><b className="font-semibold">{profile.following}</b> <span className="text-muted-foreground">Following</span></span>
+
             </div>
       </div>
 
