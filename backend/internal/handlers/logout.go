@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"social-network/backend/internal/db"
+	"social-net/internal/db"
 )
 
 func Logout(w http.ResponseWriter, r *http.Request) {
