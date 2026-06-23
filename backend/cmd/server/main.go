@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	// "social-network/backend/internal/db"
-	"social-network/backend/internal/db"
-	"social-network/backend/internal/handlers"
-	"social-network/backend/internal/middlewares"
+	"social-net/internal/db"
+	"social-net/internal/handlers"
+	"social-net/internal/middlewares"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -31,8 +31,13 @@ func main() {
 
 	// defer database.Close()
 
-	db.Setup()
-	db.RunMigrations()
+	if err := db.Open(); err != nil {
+		log.Fatalf("failed to open db: %v", err)
+	}
+
+	if err := db.RunMigrations(); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
 
 	// authHandler := &handlers.AuthHandler{
 	// 	DB: database,
