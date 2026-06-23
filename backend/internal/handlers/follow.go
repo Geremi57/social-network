@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"social-network/backend/internal/db"
+	"social-net/internal/db"
 	"strconv"
 	"strings"
 	"time"
