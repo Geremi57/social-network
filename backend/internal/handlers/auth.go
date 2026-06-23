@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"social-network/backend/internal/db"
+	"social-net/internal/db"
 
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -117,7 +117,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		"INSERT INTO users (firstname, lastname, password_hash, date_of_birth, email, avatar, about_me, nickname, is_public) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		req.FirstName, req.LastName, string(hash), req.DateOfBirth, req.Email, req.Avatar, req.AboutMe, req.Nickname, isPublic,
 	)
-
 	if err != nil {
 		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(map[string]string{"error": "email is already taken"})
@@ -139,7 +138,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID := uuid.NewString()
+	addUid, err := uuid.NewV4()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Internal server breaked -v-"})
+		return
+	}
+
+	sessionID := addUid.String()
 	expiry := time.Now().Add(24 * time.Hour)
 
 	_, err = db.DB.Exec("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
